@@ -1,19 +1,89 @@
-<script src="https://apis.google.com/js/platform.js" async defer></script>
-<meta name="google-signin-client_id" content="617101811607-202b0i3vpc7ssadek75feti2gc76k9bt.apps.googleusercontent.com">
-<div class="g-signin2" data-onsuccess="onSignIn"></div>
-function onSignIn(googleUser) {
-  var profile = googleUser.getBasicProfile();
-  console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-  console.log('Name: ' + profile.getName());
-  console.log('Image URL: ' + profile.getImageUrl());
-  console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
-}
-<a href="#" onclick="signOut();">Sign out</a>
-<script>
-  function signOut() {
-    var auth2 = gapi.auth2.getAuthInstance();
-    auth2.signOut().then(function () {
-      console.log('User signed out.');
-    });
-  }
-</script>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion Google</title>
+
+  <!-- ✅ Nouveau SDK Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    #user-info {
+      margin-top: 30px;
+      display: none;
+    }
+    img {
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <h2>Connexion avec Google</h2>
+
+  <!-- ✅ Configuration du bouton Google -->
+  <div id="g_id_onload"
+       data-client_id="617101811607-202b0i3vpc7ssadek75feti2gc76k9bt.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse"
+       data-auto_select="true">
+  </div>
+
+  <!-- ✅ Bouton de connexion -->
+  <div class="g_id_signin"
+       data-type="standard"
+       data-shape="rectangular"
+       data-theme="outline"
+       data-text="signin_with"
+       data-size="large"
+       data-logo_alignment="left">
+  </div>
+
+  <!-- ✅ Informations utilisateur -->
+  <div id="user-info">
+    <h3>Profil Google</h3>
+    <img id="user-image" src="" width="100" height="100" alt="Photo de profil"><br>
+    <strong id="user-name"></strong><br>
+    <span id="user-email"></span><br><br>
+    <a href="#" onclick="signOut()">Se déconnecter</a>
+  </div>
+
+  <script>
+    // Fonction appelée après la connexion
+    function handleCredentialResponse(response) {
+      console.log("Jeton ID Google (JWT):", response.credential);
+
+      // Décoder le token JWT pour obtenir les infos utilisateur
+      const data = parseJwt(response.credential);
+      console.log("Infos utilisateur :", data);
+
+      // Afficher les infos sur la page
+      document.getElementById('user-info').style.display = 'block';
+      document.getElementById('user-name').innerText = data.name;
+      document.getElementById('user-email').innerText = data.email;
+      document.getElementById('user-image').src = data.picture;
+    }
+
+    // Fonction pour décoder le token JWT
+    function parseJwt (token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    }
+
+    // Déconnexion (désactive la sélection automatique du compte)
+    function signOut() {
+      google.accounts.id.disableAutoSelect();
+      document.getElementById('user-info').style.display = 'none';
+      console.log("Utilisateur déconnecté.");
+    }
+  </script>
+</body>
+</html>
